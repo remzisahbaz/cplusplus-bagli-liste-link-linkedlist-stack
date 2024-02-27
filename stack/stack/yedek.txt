@@ -1,0 +1,36 @@
+ int MAX_STACKS = 1;
+    Stack* stacks;
+    stacks = (Stack*)malloc(MAX_STACKS * sizeof(Stack));
+    int stackCount = 0;
+    stacks[stackCount].init(0, 10);
+
+    std::string line;
+    int lineNo = 1;
+    while (std::getline(file, line))
+    {
+        std::cout << lineNo++ << " . satir okundu" << std::endl;
+
+        std::istringstream iss(line);
+        int number;
+        
+
+        while (iss >> number) {
+            if (!stacks[stackCount].isEmpty()) {
+
+                int top = stacks[stackCount].pop();
+                if (number > top && number % 2 == 0)
+                {
+                    stackCount++;
+                    if (stackCount >= MAX_STACKS) {
+                        MAX_STACKS++;
+                        stacks = (Stack*)realloc(stacks, MAX_STACKS * sizeof(Stack));
+                        stacks[stackCount].init(0, 10);
+                        std::cout << "stack sayisi artirildi!" << std::endl;
+                    }
+                }
+            }
+
+            stacks[stackCount].push(number);
+            std::cout << stackCount << ".stack  stack yeni eleman : " << number << std::endl;
+        }
+    }

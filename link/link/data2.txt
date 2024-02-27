@@ -1,0 +1,337 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
+
+class Node {
+public:
+    int data;
+    Node* next;
+};
+
+class LinkedList {
+public:
+    LinkedList();
+    ~LinkedList();
+    void add(int data); // Adds a new node with the given data to the end of the linked list.
+    void print(); // Prints the elements of the linked list in order.
+    float average(); // Calculates and returns the average of the data values in the linked list.
+    int nodeCount(); // Returns the number of nodes in the linked list.
+    int countFileLines(const std::string& fileName); // Counts the number of lines in the given file.
+    int findMaxNodeCount(LinkedList** topLists, int lineCount);
+    Node* head; // Pointer to the head (first node) of the linked list.
+};
+
+LinkedList::LinkedList() {
+    head = nullptr;
+}
+
+LinkedList::~LinkedList() {
+    // Destructor to free memory occupied by the linked list nodes.
+    Node* current = head;
+    while (current != nullptr) {
+        Node* next = current->next;
+        delete current;
+        current = next;
+    }
+}
+
+void LinkedList::add(int data) {
+    // Adds a new node with the given data to the end of the linked list.
+    Node* newNode = new Node();
+    newNode->data = data;
+    newNode->next = nullptr;
+
+    if (head == nullptr) {
+        head = newNode;
+    }
+    else {
+        Node* current = head;
+        while (current->next != nullptr) {
+            current = current->next;
+        }
+        current->next = newNode;
+    }
+}
+
+void LinkedList::print() {
+    // Prints the elements of the linked list in order.
+    Node* current = head;
+    while (current != nullptr) {
+        std::cout << current->data << " -> ";
+        current = current->next;
+    }
+    std::cout << "NULL" << std::endl;
+}
+
+float LinkedList::average() {
+    // Calculates and returns the average of the data values in the linked list.
+    float sum = 0.0;
+    int count = 0;
+
+    Node* current = head;
+    while (current != nullptr) {
+        sum += current->data;
+        count++;
+        current = current->next;
+    }
+
+    if (count > 0) {
+        return static_cast<float>(sum) / count;
+    }
+    else {
+        return 0.0f; // If there are no elements, the average is 0.
+    }
+}
+
+int LinkedList::nodeCount() {
+    // Returns the number of nodes in the linked list.
+    int count = 0;
+    Node* current = head;
+
+    while (current != nullptr) {
+        count++;
+        current = current->next;
+    }
+
+    return count;
+}
+
+int countFileLines(const std::string& fileName) {
+    // Counts the number of lines in the given file.
+    std::ifstream file(fileName);
+    if (!file) {
+        std::cerr << "File cannot be opened." << std::endl;
+        return -1;
+    }
+
+    int lineCount = 0;
+    std::string line;
+    while (std::getline(file, line)) {
+        lineCount++;
+    }
+
+    file.close();
+
+    return lineCount;
+}
+// Function to find the maximum node count among the linked lists in the array.
+int findMaxNodeCount(LinkedList** topLists, int lineCount) {
+    int maxNodeCount = 0;
+
+    // Loop through each linked list in the array.
+    for (int i = 0; i < lineCount; i++) {
+        // Get the node count of the current linked list.
+        int currentCount = topLists[i]->nodeCount();
+
+        // Compare the current node count with the maximum node count found so far.
+        // Update the maximum node count if the current count is greater.
+        if (currentCount > maxNodeCount) {
+            maxNodeCount = currentCount;
+        }
+    }
+
+    // Return the maximum node count among all linked lists.
+    return maxNodeCount;
+}
+
+
+
+int main() {
+    std::ifstream file("data.txt");
+    std::string fileName = "data.txt";
+    int lineCount = countFileLines(fileName);
+    if (lineCount == -1) {
+        return 1;
+    }
+    std::string line;
+
+    // Dynamically allocate memory for arrays of pointers to LinkedList objects.
+    // The topLists array will store pointers to LinkedList objects representing the top elements of each line.
+    // The bottomLists array will store pointers to LinkedList objects representing the bottom elements of each line.
+    LinkedList** topLists = (LinkedList**)malloc(lineCount * sizeof(LinkedList*));
+    LinkedList** bottomLists = (LinkedList**)malloc(lineCount * sizeof(LinkedList*));
+
+    int lineIndex = 0;
+    while (std::getline(file, line)) {
+        // Create new linked lists for the top and bottom elements of the lines.
+        LinkedList* topList = new LinkedList();
+        LinkedList* bottomList = new LinkedList();
+
+        int i = 0;
+        while (i < line.length()) {
+            // Check if the current character and the next character are both digits.
+            if (isdigit(line[i]) && i + 1 < line.length() && isdigit(line[i + 1])) {
+                int digit1 = line[i] - '0';
+                int digit2 = line[i + 1] - '0';
+                int number = digit1 * 10 + digit2;
+
+                // Add the first digit to the top list and the second digit to the bottom list.
+                topList->add(digit1);
+                bottomList->add(digit2);
+
+                i += 2; // Skip the two-digit characters by incrementing i by 2.
+            }
+            else {
+                i++;
+            }
+        }
+
+        // Store the top and bottom lists in the corresponding arrays.
+        topLists[lineIndex] = topList;
+        bottomLists[lineIndex] = bottomList;
+
+        lineIndex++;
+    }
+    file.close();
+
+
+    std::cout << std::endl;
+    for (int i = 0; i < lineCount; i++) {
+        std::cout << "Top Linked List[" << i << "]: ";
+        topLists[i]->print();
+    }
+    std::cout << std::endl;
+
+    for (int i = 0; i < lineCount; i++) {
+        std::cout << "Bottom Linked List[" << i << "]: ";
+        bottomLists[i]->print();
+    }
+
+    int positionA, positionB;
+    std::cout << "\nPosition A: ";
+    std::cin >> positionA;
+    std::cout << "Position B: ";
+    std::cin >> positionB;
+
+    // Check if positions A and B are valid.
+    if (positionA >= 0 && positionA < lineCount && positionB >= 0 && positionB < lineCount) {
+        // Swap the linked lists at positions A and B.
+        // Store the pointer to the linked list at position A in a temporary variable.
+        LinkedList* tempTop = topLists[positionA];
+        LinkedList* tempBottom = bottomLists[positionB];
+
+
+        // Assign the linked list at position B to position A.
+        // Assign the stored linked list at position A to position B.
+
+        topLists[positionA] = tempBottom;
+        bottomLists[positionB] = tempTop;
+
+    }
+    else {
+        std::cout << "Invalid positions. Please enter valid positions." << std::endl;
+    }
+
+    std::cout << "\nNew Lists After Swapping:\n";
+    std::cout << std::endl;
+    for (int i = 0; i < lineCount; i++) {
+        std::cout << "Top Linked List[" << i << "]: ";
+        topLists[i]->print();
+    }
+
+    std::cout << std::endl;
+
+    for (int i = 0; i < lineCount; i++) {
+        std::cout << "Bottom Linked List[" << i << "]: ";
+        bottomLists[i]->print();
+    }
+
+    std::cout << std::endl;
+
+    
+    // Calculate the averages for the top linked lists.
+// Find the maximum number of nodes among all linked lists in topLists.
+    int findMaxNode = findMaxNodeCount(topLists, lineCount);
+
+    // Allocate memory for two arrays: nodeAveragesTopLists and nodeItemsTopLists.
+    // These arrays will store the sum and count of each node's data in the linked lists.
+    double* nodeAveragesTopLists = (double*)malloc(findMaxNode * sizeof(double));
+    int* nodeItemsTopLists = (int*)malloc(findMaxNode * sizeof(int));
+
+    // Initialize the arrays with 0 for each element, representing the sum and count for each node.
+    for (int i = 0; i < findMaxNode; i++) {
+        nodeAveragesTopLists[i] = 0.0;
+        nodeItemsTopLists[i] = 0;
+    }
+
+
+    for (int i = 0; i < lineCount; i++) {
+        Node* current = topLists[i]->head;
+        int nodeIndex = 0;
+        int items = 0;
+        while (current) {
+            nodeAveragesTopLists[nodeIndex] += current->data;
+            nodeItemsTopLists[nodeIndex] += 1;
+            current = current->next;
+            nodeIndex++;
+        }
+    }
+
+
+    int index = 0;
+    int totalLists = 0;
+
+    for (int i = 0; i < findMaxNode; i++) {
+        totalLists = nodeItemsTopLists[i];
+        nodeAveragesTopLists[i] /= totalLists;
+    }
+   
+
+    // Calculate the sum of averages for the top linked lists.
+    double sumAveragesTopLists = 0.0;
+    for (int i = 0; i < findMaxNode; i++) {
+        sumAveragesTopLists += nodeAveragesTopLists[i];
+    }
+
+    std::cout << "Top: " << sumAveragesTopLists << std::endl;
+
+    // Calculate the averages for the bottom linked lists.
+     int findMaxNodeBottom = findMaxNodeCount(bottomLists, lineCount);
+    double* nodeAveragesBottomLists = (double*)malloc(findMaxNodeBottom * sizeof(double));
+    int* nodeItemsBottomLists = (int*)malloc(findMaxNodeBottom * sizeof(int));
+    for (int i = 0; i < findMaxNode; i++) {
+        nodeAveragesBottomLists[i] = 0;
+        nodeItemsBottomLists[i] = 0;
+    }
+    for (int i = 0; i < lineCount; i++) {
+        Node* current = bottomLists[i]->head;
+        int nodeIndex = 0;
+        int items = 0;
+        while (current) {
+            nodeAveragesBottomLists[nodeIndex] += current->data;
+            nodeItemsBottomLists[nodeIndex] += 1;
+            current = current->next;
+            nodeIndex++;
+        }
+    }
+
+    index = 0;
+    totalLists = 0;
+    for (int i = 0; i < findMaxNodeBottom; i++) {
+        totalLists = nodeItemsBottomLists[i];
+        nodeAveragesBottomLists[i] /= totalLists;
+    }
+
+    // Calculate the sum of averages for the bottom linked lists.
+    double sumAveragesBottomLists = 0.0;
+    for (int i = 0; i < findMaxNodeBottom; i++) {
+        sumAveragesBottomLists += nodeAveragesBottomLists[i];
+    }
+
+    std::cout << "Bottom: "<<  sumAveragesBottomLists << std::endl;
+
+    // Free the memory occupied by the linked lists and arrays.
+    for (int i = 0; i < lineCount; i++) {
+        delete topLists[i];
+        delete bottomLists[i];
+    }
+    free(topLists);
+    free(bottomLists);
+    free(nodeAveragesTopLists);
+    free(nodeItemsTopLists);
+    free(nodeAveragesBottomLists);
+    free(nodeItemsBottomLists);
+
+    return 0;
+}
